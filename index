@@ -1,0 +1,71 @@
+#!/bin/bash
+#SERVER="https://a.djgjkg.site:8300"
+
+
+echo "HTTP/1.0 200 OK"
+echo "Content-type: text/html"
+echo  ""
+
+echo "<html>"
+echo "<head>"
+echo "<title>Add users</title>"
+echo '<style>'\
+    '.b1 {'\
+    'background: #cce7fc;'\
+    'color: black;'\
+    'font-size: 9pt;'\
+   '}'\
+  '</style>'
+echo "</head>"
+echo "<body>"
+echo "<p align=center><font color=\"\#556B2F\">Add device</font></p>"
+echo "<a href=\"/cgi-bin/edit\">Manage Users</a>"
+echo "<form method=GET action=\"${SCRIPT}\">"\
+	'<table nowrap>'\
+	'<tr><td>User</TD><TD><input type="text" required name="user" placeholder="Login" size=12></td></tr>'\
+	'<tr><td>Password</td><td><input type="password" required pattern="^[a-zA-Z0-9]+$" name="password" placeholder="Password" size=12 value=""><font color="#D8BFD8" size="2pt">numbers and letters only</font></td>'\
+	'</tr></table>'
+#echo '<input type="radio" name="device" value="EAP" checked> Default<br>'\##Эта секция, так же для ipsec
+#	'<input type="radio" class="b1" name="device" value="XAUTH"> Android<br>'\##
+#'<!--	<input type="radio" name="device" value="weap"> Windows Phone-->'##
+
+echo '<br><input type="submit" class="b1" value="Wroom-Wroom!">'\
+	'<input type="reset" class="b1" value="Thrhrhrr..."></form>'
+
+	
+if [ "$REQUEST_METHOD" != "GET" ]; then
+        echo "<hr>Script Error:"\
+"<br>Usage error, cannot complete request, REQUEST_METHOD!=GET."\
+"<br>Check your FORM declaration and be sure to use METHOD=\"GET\".<hr>"
+        exit 1
+  fi
+  # If no search arguments, exit gracefully now.
+if [ -z "$QUERY_STRING" ]; then
+        exit 0
+else
+     # No looping this time, just extract the data you are looking for with sed:
+XX=`echo "$QUERY_STRING" | sed -n 's/^.*user=\([^&]*\).*$/\1/p' | sed "s/%20/ /g"`
+YY=`echo "$QUERY_STRING" | sed -n 's/^.*password=\([^&]*\).*$/\1/p' | sed "s/%20/ /g"`
+#ZZ=`echo "$QUERY_STRING" | sed -n 's/^.*device=\([^&]*\).*$/\1/p' | sed "s/%20/ /g"`
+echo '<br>'
+echo "User: " $XX
+echo '<br>'
+echo "Password: " $YY
+#echo '<br>'
+#echo "Device: " $ZZ
+fi
+if [ -z "$XX"]; then
+echo '<h3><font color="red">WTF!? You must enter login/password!</font></h3>'
+else
+echo $XX:$YY >> /etc/ocserv/ocpasswdnohash
+yes $YY | ocpasswd -c /etc/ocserv/ocpasswd $XX 
+#echo $XX : $ZZ \"$YY\" >>  ipsec.secrets # для ipsec
+
+echo "<script language=\"JavaScript\">"
+echo  "window.location.href = \"/cgi-bin/index\""
+echo "</script>"
+
+fi
+
+echo "</body></html>"
+

@@ -1,0 +1,82 @@
+#!/bin/bash
+####
+#SERVER="https://a.djgjkg.site:8300"
+####
+echo "HTTP/1.0 200 OK"
+echo "Content-type: text/html"
+echo  ""
+
+echo "<html>"
+echo "<head>"
+echo "<title>Manage users page</title>"
+echo '<style>'\
+    '.b1 {'\
+    'background: #cce7fc;'\
+    'color: black;'\
+    'font-size: 9pt;'\
+   '}'
+echo '.brd {'\
+    'border: 4px inset #191970;'\
+    'background: #F0F8FF;'\
+    'padding: 10px;'\
+   '}'\
+ '</style>'
+echo "</head>"
+echo "<body>"
+echo "<p align=center><font color=\"\#556B2F\">Manage Users</font></p>"
+echo "<a href=\"/cgi-bin/index\">Add Users</a>"
+echo "<form method=GET action=\"${SCRIPT}\">"
+echo '<table width="100%" class="brd" bordercolor="#191970" border=2 cellpadding="1" cellspacing="1">'
+
+while read -r line
+do
+eval $(echo $line | awk -F ":" '{print "i="$1}')
+echo "<tr><td>$i</td><td align=\"center\"><input type=\"checkbox\" name=\"remove\" value=\"$i\"></td></tr>"
+done < /etc/ocserv/ocpasswd
+echo '<table width="100%" cellpadding="5">'
+echo  "<td></td><td align=\"right\"><input type=\"submit\" class=\"b1\" value=\"Go To Hell\"></td>"
+echo "</table></form>"
+
+###############################################
+if [ "$REQUEST_METHOD" != "GET" ]; then
+        echo "<hr>Script Error:"\
+"<br>Usage error, cannot complete request, REQUEST_METHOD!=GET."\
+"<br>Check your FORM declaration and be sure to use METHOD=\"GET\".<hr>"
+        exit 1
+  fi
+  # If no search arguments, exit gracefully now.
+if [ -z "$QUERY_STRING" ]; then
+        exit 0
+else
+     # No looping this time, just extract the data you are looking for with sed:
+XX=`echo "$QUERY_STRING" | sed -n 's/^.*remove=\([^&]*\).*$/\1/p' | sed "s/%20/ /g"`
+YY=`echo "$QUERY_STRING" | sed -n 's/^.*removeconfirm=\([^&]*\).*$/\1/p' | sed "s/%20/ /g"`
+fi
+
+#echo User "$XX"
+#echo "<br>"
+#echo Flag "$YY"
+#echo "<br>"
+if [ -n $YY]; then
+	if [ -n $XX ]; then
+
+		echo "User <font color=red> $XX</font> will be deported to hell, are you sure?"
+		echo "<form method=GET action=\"${SCRIPT}\">"
+		echo '<p><input type="checkbox" required name="removeconfirm" value="go">Confirm!'
+		echo "<button class=\"b1\" name=remove value=\"$XX\">Kill HIm!</button></form></p>"
+	else
+		echo '<h3><font color="red">Hey Hey! You must choose who goes to hell today !!!</font></h3>'
+	fi
+else
+        	ocpasswd -d -c /etc/ocserv/ocpasswd $XX 
+                echo "OKOK User<font color=red> $XX </font>deported to hell."
+                echo "<script language=\"JavaScript\">"
+                echo "setTimeout(function () {"
+                echo  "window.location.href = \"/cgi-bin/edit\""
+                echo "}, 2000);"
+                echo "</script>"
+fi
+
+
+
+echo "</body></html>"
